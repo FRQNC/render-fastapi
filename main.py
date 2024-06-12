@@ -32,18 +32,18 @@ from fastapi import FastAPI
 
 import os
 
-def list_directory_structure(root_dir, indent=''):
-    items = os.listdir(root_dir)
-    for item in items:
-        path = os.path.join(root_dir, item)
-        if os.path.isdir(path):
-            print(f"{indent}{item}/")
-            list_directory_structure(path, indent + '    ')
-        else:
-            print(f"{indent}{item}")
+# def list_directory_structure(root_dir, indent=''):
+#     items = os.listdir(root_dir)
+#     for item in items:
+#         path = os.path.join(root_dir, item)
+#         if os.path.isdir(path):
+#             print(f"{indent}{item}/")
+#             list_directory_structure(path, indent + '    ')
+#         else:
+#             print(f"{indent}{item}")
 
-root_directory = 'path_to_your_root_directory'
-list_directory_structure(str(os.getcwd()))
+# root_directory = 'path_to_your_root_directory'
+# list_directory_structure(str(os.getcwd()))
 
 app = FastAPI(title="Web service Sehatyuk",
     version="0.0.1",)
@@ -385,7 +385,7 @@ def read_image(id_obat: int, db: Session = Depends(get_db), token: str = Depends
     if not obat:
         raise HTTPException(status_code=404, detail="id tidak valid")
     nama_image = obat.foto_obat
-    image_path = os.path.join(path_img, "cariObatPage", nama_image)
+    image_path = os.path.join(path_img, "CariObatPage", nama_image)
     current_dir = os.getcwd()
     print(f"Current working directory: {current_dir}")
     print(f"Full image path: {image_path}")

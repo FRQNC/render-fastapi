@@ -15,6 +15,7 @@ from fastapi import Depends, Request, FastAPI, HTTPException
 
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm,OAuth2PasswordBearer
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from sqlalchemy.orm import Session
@@ -42,6 +43,12 @@ app.add_middleware(
  allow_headers=["*"],
 )
 
+
+# Ensure the image directory exists
+os.makedirs("image", exist_ok=True)
+
+# Mount the image directory
+app.mount("/static", StaticFiles(directory="image"), name="static")
 
 @app.get("/")
 def read_root():
@@ -443,6 +450,7 @@ def read_image(id_user:int,  db: Session = Depends(get_db),token: str = Depends(
         detail_str = "File dengan nama " + nama_image + " tidak ditemukan"
         raise HTTPException(status_code=404, detail=detail_str)
     
+    print("test " + user.id_user + " " + user.nama_lengkap_user)
     print("nama image = " + nama_image)
     fr =  FileResponse(path_img + "profilePage/" + nama_image)
     return fr   

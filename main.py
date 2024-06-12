@@ -425,65 +425,63 @@ def create_pengingat_minum_obat(
 # image dokter berdasarkan id
 path_img = "image/"
 @app.get("/dokter_image/{id_dokter}")
-def read_image(id_dokter:int,  db: Session = Depends(get_db),token: str = Depends(oauth2_scheme)):
-    usr =  verify_token(token)
-    dokter = crud.get_dokter_by_id(db,id_dokter)
-    if not(dokter):
+def read_image(id_dokter: int, db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
+    usr = verify_token(token)
+    dokter = crud.get_dokter_by_id(db, id_dokter)
+    if not dokter:
         raise HTTPException(status_code=404, detail="id tidak valid")
-    nama_image =  dokter.foto_dokter
-    if not(path.exists(path_img + "cariDokterPage/" + nama_image)):
-        detail_str = "File dengan nama " + nama_image + " tidak ditemukan"
+    nama_image = dokter.foto_dokter
+    image_path = os.path.join(path_img, "cariDokterPage", nama_image)
+    if not os.path.exists(image_path):
+        detail_str = f"File dengan nama {nama_image} tidak ditemukan"
         raise HTTPException(status_code=404, detail=detail_str)
     
-    print("nama image = " + nama_image)
-    fr =  FileResponse(path_img + "cariDokterPage/" + nama_image)
-    return fr
-   
+    return FileResponse(image_path)
+
 @app.get("/user_image/{id_user}")
-def read_image(id_user:int,  db: Session = Depends(get_db),token: str = Depends(oauth2_scheme)):
-    usr =  verify_token(token)
-    user = crud.get_user(db,id_user)
-    if not(user):
+def read_image(id_user: int, db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
+    usr = verify_token(token)
+    user = crud.get_user(db, id_user)
+    if not user:
         raise HTTPException(status_code=404, detail="id tidak valid")
-    nama_image =  user.foto_user
-    if not(path.exists(path_img + "profilePage/" + nama_image)):
-        detail_str = "File dengan nama " + nama_image + " tidak ditemukan"
+    nama_image = user.foto_user
+    image_path = os.path.join(path_img, "profilePage", nama_image)
+    if not os.path.exists(image_path):
+        detail_str = f"File dengan nama {nama_image} tidak ditemukan"
         raise HTTPException(status_code=404, detail=detail_str)
     
-    print("test " + str(user.id_user) + " " + user.nama_lengkap_user + "Foto? " + user.foto_user)
-    print("nama image = " + nama_image)
-    fr =  FileResponse(path_img + "profilePage/" + nama_image)
-    return fr   
-   
+    return FileResponse(image_path)
+
 @app.get("/relasi_image/{id_relasi}")
-def read_image(id_relasi:int,  db: Session = Depends(get_db),token: str = Depends(oauth2_scheme)):
-    usr =  verify_token(token)
-    relasi = crud.get_relasi_by_id(db,id_relasi)
-    if not(relasi):
+def read_image(id_relasi: int, db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
+    usr = verify_token(token)
+    relasi = crud.get_relasi_by_id(db, id_relasi)
+    if not relasi:
         raise HTTPException(status_code=404, detail="id tidak valid")
-    nama_image =  relasi.foto_relasi
-    if not(path.exists(path_img + "relasiPage/" + nama_image)):
-        detail_str = "File dengan nama " + nama_image + " tidak ditemukan"
+    nama_image = relasi.foto_relasi
+    image_path = os.path.join(path_img, "relasiPage", nama_image)
+    if not os.path.exists(image_path):
+        detail_str = f"File dengan nama {nama_image} tidak ditemukan"
         raise HTTPException(status_code=404, detail=detail_str)
     
-    print("nama image = " + nama_image)
-    fr =  FileResponse(path_img + "relasiPage/" + nama_image)
-    return fr   
-   
+    return FileResponse(image_path)
+
 @app.get("/obat_image/{id_obat}")
-def read_image(id_obat:int,  db: Session = Depends(get_db),token: str = Depends(oauth2_scheme)):
-    usr =  verify_token(token)
-    obat = crud.get_obat_by_id(db,id_obat)
-    if not(obat):
+def read_image(id_obat: int, db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
+    usr = verify_token(token)
+    obat = crud.get_obat_by_id(db, id_obat)
+    if not obat:
         raise HTTPException(status_code=404, detail="id tidak valid")
-    nama_image =  obat.foto_obat
-    if not(path.exists(path_img + "cariObatPage/" + nama_image)):
-        detail_str = "File dengan path " + path_img + "cariObatPage/" + nama_image + " tidak ditemukan"
+    nama_image = obat.foto_obat
+    image_path = os.path.join(path_img, "cariObatPage", nama_image)
+    current_dir = os.getcwd()
+    print(f"Current working directory: {current_dir}")
+    print(f"Full image path: {image_path}")
+    if not os.path.exists(image_path):
+        detail_str = f"File dengan path {image_path} tidak ditemukan"
         raise HTTPException(status_code=404, detail=detail_str)
     
-    print("nama image = " + nama_image)
-    fr =  FileResponse(path_img + "cariObatPage/" + nama_image)
-    return fr   
+    return FileResponse(image_path)
 
 # get rekam_medis by id
 @app.get("/rekam_medis/{rekam_medis_id}", response_model=schemas.RekamMedis)

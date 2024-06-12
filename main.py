@@ -29,6 +29,7 @@ import datetime
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 
+import os
 
 app = FastAPI(title="Web service Sehatyuk",
     version="0.0.1",)
@@ -41,6 +42,15 @@ app.add_middleware(
  allow_headers=["*"],
 )
 
+
+@app.get("/")
+def read_root():
+    return {"Hello": "World"}
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8000))
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=port)
 
 # Dependency
 def get_db():

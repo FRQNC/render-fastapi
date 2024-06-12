@@ -150,7 +150,7 @@ def create_user(db: Session, user: schemas.UserCreate):
     db_user = models.User(
         nama_lengkap_user=user.nama_lengkap_user,
         tgl_lahir_user=user.tgl_lahir_user,
-        gender_user=user.gender_user,
+        gender_user=user.gender_user[0],
         alamat_user=user.alamat_user,
         no_bpjs_user=user.no_bpjs_user,
         no_telp_user=user.no_telp_user,
@@ -164,6 +164,7 @@ def create_user(db: Session, user: schemas.UserCreate):
     return db_user
 
 def update_user(db: Session, id_user: int, user_update: schemas.UserBase):
+    user_update.gender_user = user_update.gender_user[0]
     db_user = db.query(models.User).filter(models.User.id_user == id_user).first()
     
     if not db_user:
@@ -197,7 +198,7 @@ def create_relasi(db: Session, relasi: schemas.RelasiCreate):
         nama_lengkap_relasi=relasi.nama_lengkap_relasi,
         no_bpjs_relasi=relasi.no_bpjs_relasi,
         tgl_lahir_relasi=relasi.tgl_lahir_relasi,
-        gender_relasi=relasi.gender_relasi,
+        gender_relasi=relasi.gender_relasi[0],
         no_telp_relasi=relasi.no_telp_relasi,
         alamat_relasi=relasi.alamat_relasi,
         foto_relasi=relasi.foto_relasi,
@@ -319,7 +320,7 @@ def create_janji_temu_as_orang_lain(db: Session, janji_temu_as_orang_lain: schem
         nama_lengkap_orang_lain = janji_temu_as_orang_lain.nama_lengkap_orang_lain,
         no_bpjs_orang_lain = janji_temu_as_orang_lain.no_bpjs_orang_lain,
         tgl_lahir_orang_lain = janji_temu_as_orang_lain.tgl_lahir_orang_lain,
-        gender_orang_lain = janji_temu_as_orang_lain.gender_orang_lain,
+        gender_orang_lain = janji_temu_as_orang_lain.gender_orang_lain[0],
         no_telp_orang_lain = janji_temu_as_orang_lain.no_telp_orang_lain,
         alamat_orang_lain = janji_temu_as_orang_lain.alamat_orang_lain,
     )

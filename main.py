@@ -478,7 +478,7 @@ def read_image(id_obat:int,  db: Session = Depends(get_db),token: str = Depends(
         raise HTTPException(status_code=404, detail="id tidak valid")
     nama_image =  obat.foto_obat
     if not(path.exists(path_img + "cariObatPage/" + nama_image)):
-        detail_str = "File dengan nama " + nama_image + " tidak ditemukan"
+        detail_str = "File dengan path " + path_img + "cariObatPage/" + nama_image + " tidak ditemukan"
         raise HTTPException(status_code=404, detail=detail_str)
     
     print("nama image = " + nama_image)

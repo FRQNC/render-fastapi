@@ -425,7 +425,8 @@ def read_image(id_dokter:int,  db: Session = Depends(get_db),token: str = Depend
         raise HTTPException(status_code=404, detail="id tidak valid")
     nama_image =  dokter.foto_dokter
     if not(path.exists(path_img + "cariDokterPage/" + nama_image)):
-        raise HTTPException(status_code=404, detail="File dengan nama tersebut tidak ditemukan")
+        detail_str = "File dengan nama " + nama_image + " tidak ditemukan"
+        raise HTTPException(status_code=404, detail=detail_str)
     
     fr =  FileResponse(path_img + "cariDokterPage/" + nama_image)
     return fr
@@ -438,7 +439,8 @@ def read_image(id_user:int,  db: Session = Depends(get_db),token: str = Depends(
         raise HTTPException(status_code=404, detail="id tidak valid")
     nama_image =  user.foto_user
     if not(path.exists(path_img + "profilePage/" + nama_image)):
-        raise HTTPException(status_code=404, detail="File dengan nama tersebut tidak ditemukan")
+        detail_str = "File dengan nama " + nama_image + " tidak ditemukan"
+        raise HTTPException(status_code=404, detail=detail_str)
     
     fr =  FileResponse(path_img + "profilePage/" + nama_image)
     return fr   
@@ -451,7 +453,8 @@ def read_image(id_relasi:int,  db: Session = Depends(get_db),token: str = Depend
         raise HTTPException(status_code=404, detail="id tidak valid")
     nama_image =  relasi.foto_relasi
     if not(path.exists(path_img + "relasiPage/" + nama_image)):
-        raise HTTPException(status_code=404, detail="File dengan nama tersebut tidak ditemukan")
+        detail_str = "File dengan nama " + nama_image + " tidak ditemukan"
+        raise HTTPException(status_code=404, detail=detail_str)
     
     fr =  FileResponse(path_img + "relasiPage/" + nama_image)
     return fr   
@@ -464,7 +467,8 @@ def read_image(id_obat:int,  db: Session = Depends(get_db),token: str = Depends(
         raise HTTPException(status_code=404, detail="id tidak valid")
     nama_image =  obat.foto_obat
     if not(path.exists(path_img + "cariObatPage/" + nama_image)):
-        raise HTTPException(status_code=404, detail="File dengan nama tersebut tidak ditemukan")
+        detail_str = "File dengan nama " + nama_image + " tidak ditemukan"
+        raise HTTPException(status_code=404, detail=detail_str)
     
     fr =  FileResponse(path_img + "cariObatPage/" + nama_image)
     return fr   

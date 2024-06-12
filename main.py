@@ -32,6 +32,19 @@ from fastapi import FastAPI
 
 import os
 
+def list_directory_structure(root_dir, indent=''):
+    items = os.listdir(root_dir)
+    for item in items:
+        path = os.path.join(root_dir, item)
+        if os.path.isdir(path):
+            print(f"{indent}{item}/")
+            list_directory_structure(path, indent + '    ')
+        else:
+            print(f"{indent}{item}")
+
+root_directory = 'path_to_your_root_directory'
+list_directory_structure(str(os.getcwd()))
+
 app = FastAPI(title="Web service Sehatyuk",
     version="0.0.1",)
 
@@ -49,10 +62,6 @@ os.makedirs("image", exist_ok=True)
 
 # Mount the image directory
 app.mount("/static", StaticFiles(directory="image"), name="static")
-
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
@@ -77,63 +86,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 @app.get("/")
 async def root():
-    return {"message": "Dokumentasi API: [url]:8000/docs"}
-
-# nanti disembunyikan, untuk iniisasi tambah user dan items, biar nggak manual setiap db diganti
-# hati2 ini menghapus data di tabel item dan user
-# @app.put("/init")
-# async def init(db: Session = Depends(get_db)):
-#     crud.delete_all_item(db)
-#     crud.delete_all_user(db)
-#     u = schemas.UserCreate
-#     u.username = "default"
-#     u.password = "ilkomupi"
-#     crud.create_user(db,u)
-    
-#     i = schemas.ItemCreate
-#     i.title = "Mie Bakso"
-#     i.description = "Mie Bakso gurih dengan bakso yang besar"
-#     i.img_name = "bakso.png"
-#     i.price = 12000
-#     crud.create_item(db,i)
-
-#     i = schemas.ItemCreate
-#     i.title = "Nasi Goreng"
-#     i.description = "Nasi goreng enak dan melimpahr"
-#     i.img_name = "nasi_goreng.png"
-#     i.price = 10000
-#     crud.create_item(db,i)
-
-#     i = schemas.ItemCreate
-#     i.title = "Nasi Kuning"
-#     i.description = "Nasi kuning lezat pisan"
-#     i.img_name = "nasi_kuning.png"
-#     i.price = 17000
-#     crud.create_item(db,i)
-
-#     i = schemas.ItemCreate
-#     i.title = "Kupat Tahu"
-#     i.description = "Kupat Tahu dengan kuah melimpah"
-#     i.img_name = "kupat_tahu.png"
-#     i.price = 5000
-#     crud.create_item(db,i)
-
-#     i = schemas.ItemCreate
-#     i.title = "Pecel Lele"
-#     i.description = "Pecel lele dengan ikan lele yang segar"
-#     i.img_name = "pecel_lele.png"
-#     i.price = 11000
-#     crud.create_item(db,i)
-
-#     i = schemas.ItemCreate
-#     i.title = "Ayam Geprek"
-#     i.description = "Pecel lele dengan ikan lele yang segar"
-#     i.img_name = "ayam_geprek.png"
-#     i.price = 11000
-#     crud.create_item(db,i)
-
-#     return {"message": "OK"}
-
+    return {"message": "Dokumentasi API: [url]/docs"}
 
 # create user 
 @app.post("/create_user/", response_model=schemas.User)
@@ -178,13 +131,6 @@ async def login_no_telp(user: schemas.UserLoginPhone, db: Session = Depends(get_
         raise HTTPException(status_code=400, detail="User tidak ditemukan, kontak admin")
 
 
-# # untuk debug saja, nanti rolenya admin?
-# @app.get("/users/", response_model=list[schemas.User])
-# def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db),token: str = Depends(oauth2_scheme) ):
-#     usr =  verify_token(token)
-#     users = crud.get_users(db, skip=skip, limit=limit)
-#     return users
-
 # #lihat detil user_id
 @app.get("/get_user_by_id/{id_user}", response_model=schemas.User)
 def read_user(id_user: int, db: Session = Depends(get_db),token: str = Depends(oauth2_scheme)):
@@ -222,8 +168,6 @@ def update_password(id_user: int, passwords: schemas.Password, db: Session = Dep
     if update_user_password:
         return JSONResponse(status_code=200, content={"message" : "Password updated successfully"})
         
-# tambah item ke keranjang
-# response ada id (cart), sedangkan untuk paramater input  tidak ada id (cartbase)
 @app.post("/create_relasi/", response_model=schemas.Relasi ) # response_model=schemas.Cart 
 def create_relasi(
     relasi: schemas.RelasiCreate, db: Session = Depends(get_db),token: str = Depends(oauth2_scheme)):
@@ -231,12 +175,6 @@ def create_relasi(
     # print(usr)
     return crud.create_relasi(db=db, relasi=relasi)
 
-# untuk semua isi cart, hanya untuk debug
-# @app.get("/carts/", response_model=list[schemas.Cart])
-# def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db),token: str = Depends(oauth2_scheme)):
-#     usr =  verify_token(token) #bisa digunakan untuk mengecek apakah user cocok (tdk boleh akses data user lain)
-#     carts = crud.get_carts(db, skip=skip, limit=limit)
-#     return carts
 
 #ambil semua relasi milik user
 @app.get("/get_relasi/{id_user}", response_model=list[schemas.Relasi])
@@ -246,7 +184,6 @@ def read_relasi(id_user:int, db: Session = Depends(get_db),token: str = Depends(
     relasi = crud.get_relasi(db, id_user=id_user)
     return relasi
 
-#ambil isi cart milik seorang user
 @app.get("/get_relasi_by_id/{id_relasi}", response_model=schemas.Relasi)
 def read_relasi(id_relasi:int, db: Session = Depends(get_db),token: str = Depends(oauth2_scheme)):
     usr =  verify_token(token) #bisa digunakan untuk mengecek apakah user cocok (tdk boleh akses data user lain)
@@ -254,7 +191,6 @@ def read_relasi(id_relasi:int, db: Session = Depends(get_db),token: str = Depend
     relasi = crud.get_relasi_by_id(db, id_relasi=id_relasi)
     return relasi
 
-# # hapus item cart berdasarkan cart id
 @app.delete("/delete_relasi/{id_relasi}")
 def delete_relasi(id_relasi:int,db: Session = Depends(get_db),token: str = Depends(oauth2_scheme) ):
     usr =  verify_token(token) #bisa digunakan untuk mengecek apakah user cocok (tdk boleh akses data user lain)
@@ -263,8 +199,7 @@ def delete_relasi(id_relasi:int,db: Session = Depends(get_db),token: str = Depen
 @app.post("/create_dokter/", response_model=schemas.Dokter ) # response_model=schemas.Cart 
 def create_dokter(
     dokter: schemas.DokterCreate, db: Session = Depends(get_db),token: str = Depends(oauth2_scheme)):
-    usr =  verify_token(token) #bisa digunakan untuk mengecek apakah user cocok (tdk boleh akses data user lain)
-    # print(usr)
+    usr =  verify_token(token)
     return crud.create_dokter(db=db, dokter=dokter)
 
 #ambil semua dokter
@@ -399,29 +334,6 @@ def create_pengingat_minum_obat(
     usr =  verify_token(token) 
     return crud.create_pengingat_minum_obat(db=db, pengingat_minum_obat=pengingat_minum_obat)
 
-# # hapus item cart berdasarkan user id
-# @app.delete("/clear_whole_carts_by_userid/{user_id}")
-# def delete_item_user_cart(user_id:int,db: Session = Depends(get_db),token: str = Depends(oauth2_scheme) ):
-#     usr =  verify_token(token) #bisa digunakan untuk mengecek apakah user cocok (tdk boleh akses data user lain)
-#     return crud.delete_cart_by_userid(db,user_id=user_id)
-
-
-# #### ITEMS
-
-# # create item, tapi hanya untuk internal, role terpisah? nanti saja kalau sempat
-# # kalau sudah selsai disembunyikan agar mhs tdk menambah item random
-# # @app.post("/items/", response_model=schemas.ItemBase)
-# # def create_item(item: schemas.ItemBase, db: Session = Depends(get_db),token: str = Depends(oauth2_scheme)):
-# #     usr =  verify_token(token)
-# #     return crud.create_item(db=db, item=item)
-
-# # semua item
-# @app.get("/items/", response_model=list[schemas.Item])
-# def read_items(skip: int = 0, limit: int = 100, db: Session = Depends(get_db),token: str = Depends(oauth2_scheme)):
-#     usr =  verify_token(token)
-#     items = crud.get_items(db, skip=skip, limit=limit)
-#     return items
-
 # image dokter berdasarkan id
 path_img = "image/"
 @app.get("/dokter_image/{id_dokter}")
@@ -501,72 +413,11 @@ def read_rekam_medis_selesai_by_user(user_id: int, token: str = Depends(oauth2_s
         raise HTTPException(status_code=404, detail="No Rekam Medis found with status 'Selesai'")
     return rekam_medis_list
 
-# # cari item berdasarkan deskripsi
-# @app.get("/search_items/{keyword}")
-# def cari_item(keyword:str,  db: Session = Depends(get_db),token: str = Depends(oauth2_scheme)):
-#     usr =  verify_token(token)
-
-#     return crud.get_item_by_keyword(db,keyword)
-
-# ###################  status
-
-# #status diset manual dulu karena cukup rumit kalau ditangani constraitnya
-
-# #keranjang terisi --> user checkout dan siap bayar
-# @app.post("/set_status_harap_bayar/{user_id}")
-# def set_status_harap_bayar(user_id:int,  db: Session = Depends(get_db),token: str = Depends(oauth2_scheme)):
-#     return crud.insert_status(db=db,user_id=user_id,status="belum_bayar")
-
-# #user membayar
-# @app.post("/pembayaran/{user_id}")
-# def bayar(user_id:int,  db: Session = Depends(get_db),token: str = Depends(oauth2_scheme)):
-#     return crud.pembayaran(db=db,user_id=user_id)
-
-
-# #user sudah bayar --> penjual menerima 
-# @app.post("/set_status_penjual_terima/{user_id}")
-# def set_status_penjual_terima(user_id:int,  db: Session = Depends(get_db),token: str = Depends(oauth2_scheme)):
-#     return crud.insert_status(db=db,user_id=user_id,status="pesanan_diterima")
-
-# # user sudah bayar --> penjual menolak
-# # isi keranjang dikosongkan
-# @app.post("/set_status_penjual_tolak/{user_id}")
-# def set_status_penjual_terima(user_id:int,  db: Session = Depends(get_db),token: str = Depends(oauth2_scheme)):
-#     # isi cart dikosongkan
-#     crud.delete_cart_by_userid(db,user_id=user_id)
-#     return crud.insert_status(db=db,user_id=user_id,status="pesanan_ditolak")
-
-
-# # penjual menerima --> pesanan diantar
-# @app.post("/set_status_diantar/{user_id}")
-# def set_status_penjual_terima(user_id:int,  db: Session = Depends(get_db),token: str = Depends(oauth2_scheme)):
-#     return crud.insert_status(db=db,user_id=user_id,status="pesanaan_diantar")
-
-
-# # pesanan diantar -->pesanan diterima
-# @app.post("/set_status_diterima/{user_id}")
-# def set_status_penjual_terima(user_id:int,  db: Session = Depends(get_db),token: str = Depends(oauth2_scheme)):
-#     #cart dikosongkan
-#     #idealnya isi cart dipindahkan ke transaksi untuk arsip transaksi
-#     crud.delete_cart_by_userid(db,user_id=user_id)
-#     return crud.insert_status(db=db,user_id=user_id,status="pesanan_selesai")
-
-
-# @app.get("/get_status/{user_id}")
-# def last_status(user_id:int,  db: Session = Depends(get_db),token: str = Depends(oauth2_scheme)):
-#     usr =  verify_token(token) #bisa digunakan untuk mengecek apakah user cocok (tdk boleh akses data user lain)
-#     return crud.get_last_status(db,user_id)
-
-
-# ######################## AUTH
-
-# # periksa apakah username ada dan passwordnya cocok
-# # return boolean TRUE jika username dan password cocok
+# periksa apakah username ada dan passwordnya cocok
+# return boolean TRUE jika username dan password cocok
 def authenticate_by_email(db,user: schemas.UserCreate):
     user_cari = crud.get_user_by_email(db=db, email=user.email_user)
     if user_cari:
-        # print(user.email_user)
-        # print(user.password_user)
         print(f'{user_cari.password_user} {crud.hashPassword(user.password_user)}')
         return (user_cari.password_user == crud.hashPassword(user.password_user))
     else:
@@ -616,12 +467,6 @@ def verify_token(token: str):
     return {"email": email}
 
 
-
-    
-# internal untuk testing, jangan dipanggil langsung
-# untuk swagger  .../doc supaya bisa auth dengan tombol gembok di kanan atas
-# kalau penggunaan standard, gunakan /login
-
 @app.post("/token", response_model=schemas.Token)
 async def token(req: Request, form_data: OAuth2PasswordRequestForm = Depends(),db: Session = Depends(get_db)):
 
@@ -630,10 +475,7 @@ async def token(req: Request, form_data: OAuth2PasswordRequestForm = Depends(),d
     f.password_user = form_data.password
     if not authenticate_by_email(db,f):
         raise HTTPException(status_code=400, detail="email or password tidak cocok")
-
-    #info = crud.get_user_by_email_user(form_data.email_user)
-    # email = info["email"]   
-    # role  = info["role"]   
+ 
     email_user  = form_data.username
 
     #buat access token\

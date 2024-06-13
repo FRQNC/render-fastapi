@@ -11,7 +11,9 @@
 
 
 from os import path
-from fastapi import Depends, Request, FastAPI, HTTPException
+import shutil
+import uuid
+from fastapi import Depends, Request, FastAPI, HTTPException, File, UploadFile
 
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm,OAuth2PasswordBearer
@@ -31,6 +33,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 
 import os
+
+from PIL import Image
+import io
 
 # def list_directory_structure(root_dir, indent=''):
 #     items = os.listdir(root_dir)
@@ -155,6 +160,8 @@ def update_user(id_user: int, user_update: schemas.UserBase, db: Session = Depen
         if db_user_no_telp:
             raise HTTPException(status_code=400, detail="Error: No telp sudah digunakan")
 
+    if(user_update.foto_user == ""):
+        user_update.foto_user = db_user_old.foto_user
     db_user = crud.update_user(db, id_user, user_update)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
@@ -173,7 +180,9 @@ def create_relasi(
     relasi: schemas.RelasiCreate, db: Session = Depends(get_db),token: str = Depends(oauth2_scheme)):
     usr =  verify_token(token) #bisa digunakan untuk mengecek apakah user cocok (tdk boleh akses data user lain)
     # print(usr)
-    return crud.create_relasi(db=db, relasi=relasi)
+    new_relasi = crud.create_relasi(db=db, relasi=relasi)
+    print(f'new relasi id = {new_relasi.id_relasi}')
+    return new_relasi
 
 
 #ambil semua relasi milik user
@@ -350,16 +359,17 @@ def read_image(id_dokter: int, db: Session = Depends(get_db), token: str = Depen
     
     return FileResponse(image_path)
 
-@app.get("/user_image/{id_user}")
-def read_image(id_user: int, db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
+@app.get("/user_image/{id_user}/{image_name}")
+def read_image(id_user: int, image_name: str, db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
     usr = verify_token(token)
     user = crud.get_user(db, id_user)
     if not user:
         raise HTTPException(status_code=404, detail="id tidak valid")
-    nama_image = user.foto_user
-    image_path = os.path.join(path_img, "profilePage", nama_image)
+    print(f'nama image: $image_name')
+    image_path = os.path.join(path_img, "profilePage", image_name)
+    print(f'path image: ${image_path}')
     if not os.path.exists(image_path):
-        detail_str = f"File dengan nama {nama_image} tidak ditemukan"
+        detail_str = f"File dengan nama {image_name} tidak ditemukan"
         raise HTTPException(status_code=404, detail=detail_str)
     
     return FileResponse(image_path)
@@ -394,6 +404,106 @@ def read_image(id_obat: int, db: Session = Depends(get_db), token: str = Depends
         raise HTTPException(status_code=404, detail=detail_str)
     
     return FileResponse(image_path)
+
+def compress_image(image: Image.Image, quality: int = 85) -> io.BytesIO:
+    img_byte_arr = io.BytesIO()
+    image.save(img_byte_arr, format='JPEG', quality=quality)
+    img_byte_arr.seek(0)
+    return img_byte_arr
+
+@app.post("/upload_user_image/{id_user}")
+async def create_upload_file(
+    file: UploadFile, 
+    id_user: int, 
+    db: Session = Depends(get_db), 
+    token: str = Depends(oauth2_scheme)
+):
+    usr = verify_token(token)
+    user = crud.get_user(db, id_user)
+    if not user:
+        raise HTTPException(status_code=404, detail="id tidak valid")
+    
+    # Log the file type and filename
+    print(f'File type: {file.content_type}')
+    print(f'File name: {file.filename}')
+    
+    if file.content_type not in ["image/jpeg", "image/png", "image/jpg"]:
+        raise HTTPException(status_code=400, detail="Invalid file type. Only JPEG, JPG and PNG are allowed.")
+    
+    try:
+        image = Image.open(file.file)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Invalid image file")
+
+    # Retrieve the old image filename
+    old_image = user.foto_user
+
+    # Generate a new unique filename
+    file_extension = file.filename.split('.')[-1]
+    unique_filename = f"{uuid.uuid4().hex}.{file_extension}"
+
+    # Compress the new image
+    compressed_image = compress_image(image)
+
+    # Define the file location
+    file_location = os.path.join(path_img, "profilePage", unique_filename)
+    with open(file_location, "wb") as buffer:
+        buffer.write(compressed_image.getbuffer())
+
+    # Update the user's image in the database
+    success = crud.update_image_user(db, id_user, unique_filename)
+
+    if success is not None:
+        # Delete the old image if it exists
+        if old_image:
+            old_image_path = os.path.join(path_img, "profilePage", old_image)
+            if os.path.exists(old_image_path):
+                try:
+                    os.remove(old_image_path)
+                    print(f'Old image {old_image} deleted')
+                except Exception as e:
+                    print(f'Failed to delete old image {old_image}: {e}')
+
+        return {"info": f"file '{unique_filename}' saved at '{file_location}'"}
+    else:
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+@app.post("/upload_relasi_image/{id_relasi}")
+async def create_upload_file(file: UploadFile, id_relasi: int, db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
+    usr = verify_token(token)
+    relasi = crud.get_relasi_by_id(db, id_relasi)
+    if not relasi:
+        raise HTTPException(status_code=404, detail="id tidak valid")
+    
+    # Log the file type and filename
+    print(f'File type: {file.content_type}')
+    print(f'File name: {file.filename}')
+    
+    if file.content_type not in ["image/jpeg", "image/png", "image/jpg"]:
+        raise HTTPException(status_code=400, detail="Invalid file type. Only JPEG, JPG and PNG are allowed.")
+    
+    try:
+        image = Image.open(file.file)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Invalid image file")
+
+    file_extension = file.filename.split('.')[-1]
+    unique_filename = f"{uuid.uuid4().hex}.{file_extension}"
+
+    compressed_image = compress_image(image)
+
+    file_location = f"{path_img}relasiPage/{unique_filename}"
+    with open(file_location, "wb") as buffer:
+        buffer.write(compressed_image.getbuffer())
+
+    success = crud.update_image_relasi(db, id_relasi, unique_filename)
+    print()
+
+    if success is not None:
+        return {"info": f"file '{unique_filename}' saved at '{file_location}'"}
+    else:
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
 
 # get rekam_medis by id
 @app.get("/rekam_medis/{rekam_medis_id}", response_model=schemas.RekamMedis)

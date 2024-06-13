@@ -15,9 +15,14 @@ DB_NAME = os.getenv("DB_NAME")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_PORT = os.getenv("DB_PORT")
+ENV = os.getenv("ENV")
 
 # Create the database URL
-SQLALCHEMY_DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+if(ENV == "prod"):
+    SQLALCHEMY_DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+elif(ENV == "dev"):
+    SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:@localhost/sehatyuk"
+
 
 # Create the engine using the database URL
 engine = create_engine(

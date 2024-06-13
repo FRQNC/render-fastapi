@@ -180,6 +180,22 @@ def update_user(db: Session, id_user: int, user_update: schemas.UserBase):
     
     return db_user
 
+def update_image_user(db: Session, id_user: int, filename: str):
+    db_user = db.query(models.User).filter(models.User.id_user == id_user).first()
+    
+    if not db_user:
+        return None
+    
+    print(db_user.nama_lengkap_user)
+    db_user.foto_user = filename
+    
+    db.commit()
+    db.refresh(db_user)
+    print("foto_user = " + db_user.foto_user)
+    
+    return db_user.foto_user
+
+
 def update_password(db: Session, id_user: int, newPassword: str):
     db_user = db.query(models.User).filter(models.User.id_user == id_user).first()
     if not db_user:
@@ -193,6 +209,8 @@ def update_password(db: Session, id_user: int, newPassword: str):
 
 ## relasi
 def create_relasi(db: Session, relasi: schemas.RelasiCreate):
+    if relasi.foto_relasi == "":
+        relasi.foto_relasi = "default.jpg"
     db_relasi = models.Relasi(
         id_user=relasi.id_user,
         nama_lengkap_relasi=relasi.nama_lengkap_relasi,
@@ -208,6 +226,20 @@ def create_relasi(db: Session, relasi: schemas.RelasiCreate):
     db.commit()
     db.refresh(db_relasi)
     return db_relasi
+
+def update_image_relasi(db: Session, id_relasi: int, filename: str):
+    db_relasi = db.query(models.Relasi).filter(models.Relasi.id_relasi == id_relasi).first()
+    
+    if not db_relasi:
+        return None
+    print(db_relasi.nama_lengkap_relasi)
+    db_relasi.foto_relasi = filename
+    
+    db.commit()
+    db.refresh(db_relasi)
+    print("foto_relasi = " + db_relasi.foto_relasi)
+    
+    return db_relasi.foto_relasi
 
 def delete_relasi_by_id(db: Session, id_relasi: int):
     hasil = db.query(models.Relasi).filter(models.Relasi.id_relasi == id_relasi).delete()

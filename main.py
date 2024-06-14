@@ -432,7 +432,14 @@ def read_image(id_obat: int, db: Session = Depends(get_db), token: str = Depends
 
 def compress_image(image: Image.Image, quality: int = 85) -> io.BytesIO:
     img_byte_arr = io.BytesIO()
-    image.save(img_byte_arr, format='JPEG', quality=quality)
+    
+    if image.format == 'JPEG' or image.format == 'JPG':
+        image.save(img_byte_arr, format='JPEG', quality=quality)
+    elif image.format == 'PNG':
+        image.save(img_byte_arr, format='PNG', optimize=True)
+    else:
+        raise ValueError(f"Unsupported image format: {image.format}")
+    
     img_byte_arr.seek(0)
     return img_byte_arr
 

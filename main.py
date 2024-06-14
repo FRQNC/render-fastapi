@@ -160,8 +160,6 @@ def update_user(id_user: int, user_update: schemas.UserBase, db: Session = Depen
         if db_user_no_telp:
             raise HTTPException(status_code=400, detail="Error: No telp sudah digunakan")
 
-    if(user_update.foto_user == ""):
-        user_update.foto_user = db_user_old.foto_user
     db_user = crud.update_user(db, id_user, user_update)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
@@ -181,7 +179,6 @@ def create_relasi(
     usr =  verify_token(token) #bisa digunakan untuk mengecek apakah user cocok (tdk boleh akses data user lain)
     # print(usr)
     new_relasi = crud.create_relasi(db=db, relasi=relasi)
-    print(f'new relasi id = {new_relasi.id_relasi}')
     return new_relasi
 
 
@@ -365,9 +362,7 @@ def read_image(id_user: int, image_name: str, db: Session = Depends(get_db), tok
     user = crud.get_user(db, id_user)
     if not user:
         raise HTTPException(status_code=404, detail="id tidak valid")
-    print(f'nama image: $image_name')
     image_path = os.path.join(path_img, "profilePage", image_name)
-    print(f'path image: ${image_path}')
     if not os.path.exists(image_path):
         detail_str = f"File dengan nama {image_name} tidak ditemukan"
         raise HTTPException(status_code=404, detail=detail_str)
@@ -397,8 +392,6 @@ def read_image(id_obat: int, db: Session = Depends(get_db), token: str = Depends
     nama_image = obat.foto_obat
     image_path = os.path.join(path_img, "CariObatPage", nama_image)
     current_dir = os.getcwd()
-    print(f"Current working directory: {current_dir}")
-    print(f"Full image path: {image_path}")
     if not os.path.exists(image_path):
         detail_str = f"File dengan path {image_path} tidak ditemukan"
         raise HTTPException(status_code=404, detail=detail_str)
@@ -422,10 +415,6 @@ async def create_upload_file(
     user = crud.get_user(db, id_user)
     if not user:
         raise HTTPException(status_code=404, detail="id tidak valid")
-    
-    # Log the file type and filename
-    print(f'File type: {file.content_type}')
-    print(f'File name: {file.filename}')
     
     if file.content_type not in ["image/jpeg", "image/png", "image/jpg"]:
         raise HTTPException(status_code=400, detail="Invalid file type. Only JPEG, JPG and PNG are allowed.")
@@ -475,10 +464,6 @@ async def create_upload_file(file: UploadFile, id_relasi: int, db: Session = Dep
     if not relasi:
         raise HTTPException(status_code=404, detail="id tidak valid")
     
-    # Log the file type and filename
-    print(f'File type: {file.content_type}')
-    print(f'File name: {file.filename}')
-    
     if file.content_type not in ["image/jpeg", "image/png", "image/jpg"]:
         raise HTTPException(status_code=400, detail="Invalid file type. Only JPEG, JPG and PNG are allowed.")
     
@@ -497,7 +482,6 @@ async def create_upload_file(file: UploadFile, id_relasi: int, db: Session = Dep
         buffer.write(compressed_image.getbuffer())
 
     success = crud.update_image_relasi(db, id_relasi, unique_filename)
-    print()
 
     if success is not None:
         return {"info": f"file '{unique_filename}' saved at '{file_location}'"}
@@ -528,7 +512,6 @@ def read_rekam_medis_selesai_by_user(user_id: int, token: str = Depends(oauth2_s
 def authenticate_by_email(db,user: schemas.UserCreate):
     user_cari = crud.get_user_by_email(db=db, email=user.email_user)
     if user_cari:
-        print(f'{user_cari.password_user} {crud.hashPassword(user.password_user)}')
         return (user_cari.password_user == crud.hashPassword(user.password_user))
     else:
         return False  

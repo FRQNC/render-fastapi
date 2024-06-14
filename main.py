@@ -10,15 +10,13 @@
 # pkill gunicorn
 
 
-from os import path
-import shutil
+
 import uuid
-from fastapi import Depends, Request, FastAPI, HTTPException, File, UploadFile
+from fastapi import Depends, Request, FastAPI, HTTPException, UploadFile
 
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm,OAuth2PasswordBearer
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
 
 from sqlalchemy.orm import Session
 
@@ -36,6 +34,10 @@ import os
 
 from PIL import Image
 import io
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # def list_directory_structure(root_dir, indent=''):
 #     items = os.listdir(root_dir)
@@ -167,12 +169,42 @@ def update_user(id_user: int, user_update: schemas.UserBase, db: Session = Depen
 
 @app.put("/update_password/{id_user}", response_model= schemas.ResponseMSG)
 def update_password(id_user: int, passwords: schemas.Password, db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
-    if not match_password(db, id_user, passwords.old_password):
+    if not match_password(db, passwords.old_password, id_user):
         raise HTTPException(status_code=400, detail="Error: Password tidak sesuai")
     update_user_password =  crud.update_password(db,id_user,passwords.new_password)
     if update_user_password:
         return JSONResponse(status_code=200, content={"message" : "Password updated successfully"})
-        
+    
+@app.post("/forget_password/", response_model= schemas.ResponseMSG)
+def forget_password(user_credential: schemas.UserCredential, db: Session = Depends(get_db)):
+    typed_email = user_credential.email_user
+    typed_phone = user_credential.no_telp_user
+    typed_dob = user_credential.tgl_lahir_user
+    db_user_email = crud.get_user_by_email(db, typed_email)
+    if not db_user_email:
+        raise HTTPException(status_code=404, detail="Email tidak ditemukan")
+    else:
+        db_user_phone = crud.get_user_by_no_telp(db, typed_phone)
+        if not db_user_phone:
+            raise HTTPException(status_code=404, detail="No. Telepon tidak ditemukan")
+        else:
+            if db_user_email.id_user != db_user_phone.id_user:
+                raise HTTPException(status_code=404, detail="Tidak ada user dengan gabungan email dan no. telepon tersebut")
+            else:
+                if str(db_user_email.tgl_lahir_user) != typed_dob:
+                    raise HTTPException(status_code=404, detail=f"Tanggal lahir salah")
+                else:
+                    if user_credential.new_password is None:
+                        return JSONResponse(status_code=200, content={"message" : "Kredensial user benar"})
+                    else:
+                        update_user_password =  crud.update_password(db,db_user_email.id_user,user_credential.new_password)
+                        if update_user_password:
+                            return JSONResponse(status_code=200, content={"message" : "Password updated successfully"})
+                        else:
+                            raise HTTPException(status_code=500, detail="Gagal mengubah password") 
+
+
+                
 @app.post("/create_relasi/", response_model=schemas.Relasi ) # response_model=schemas.Cart 
 def create_relasi(
     relasi: schemas.RelasiCreate, db: Session = Depends(get_db),token: str = Depends(oauth2_scheme)):
@@ -523,19 +555,22 @@ def authenticate_by_no_telp(db,user: schemas.UserCreate):
     else:
         return False    
     
-def match_password(db, id_user, typedPassword: schemas.Password):
-    user = crud.get_user(db, id_user)
+def match_password(db,typed_password: schemas.Password, id_user= 0, by_email= False, email_user= ""):
+    if not by_email:
+        user = crud.get_user(db, id_user)
+    else:
+        user = crud.get_user_by_email(db, email_user)
     if user:
-        return user.password_user == crud.hashPassword(typedPassword)
+        return user.password_user == crud.hashPassword(typed_password)
     else:
         return False
 
-SECRET_KEY = "sehatyukgaissss"
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 
 def create_access_token(email):
     # info yang penting adalah berapa lama waktu expire
-    expiration_time = datetime.datetime.now(datetime.UTC) + datetime.timedelta(hours=24)    # .now(datetime.UTC)
+    expiration_time = datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=7)    # .now(datetime.UTC)
     access_token = jwt.encode({"email":email,"exp":expiration_time},SECRET_KEY,algorithm="HS256")
     return access_token    
 

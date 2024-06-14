@@ -1,6 +1,6 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import date, time
-from typing import List, Optional, Literal
+from typing import List, Optional, Literal, Union
 from enum import Enum
 
 class ResponseMSG(BaseModel):
@@ -165,6 +165,12 @@ class User(UserBase):
 class Password(BaseModel):
     old_password: str
     new_password: str
+
+class UserCredential(BaseModel):
+    email_user: str
+    no_telp_user: str
+    tgl_lahir_user: str
+    new_password: Union[str, None] = Field(default=None)
 
 # Janji Temu as Orang Lain
 class JanjiTemuAsOrangLainBase(BaseModel):

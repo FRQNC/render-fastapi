@@ -2,8 +2,16 @@ from sqlalchemy.orm import Session
 import models, schemas
 import bcrypt
 from sqlalchemy import desc
+from dotenv import load_dotenv
+import base64
+import os
 
-SALT = b'$2b$12$0nFckzktMD0Fb16a8JsNA.'
+load_dotenv()
+
+base64_salt = os.getenv('SALT')
+
+# Decode the base64 string back to bytes
+SALT = base64.b64decode(base64_salt)
 
 def get_user(db: Session, id_user: int):
     return db.query(models.User).filter(models.User.id_user == id_user).first()
